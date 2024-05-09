@@ -79,7 +79,7 @@ test("omit parse - fail", () => {
 test("nonstrict inference", () => {
   const laxfish = fish.pick({ name: true }).catchall(z.any());
   type laxfish = z.infer<typeof laxfish>;
-  util.assertEqual<laxfish, { [k: string]: any; name: string }>(true);
+  util.assertEqual<laxfish, { name: string } & { [k: string]: any }>(true);
 });
 
 test("nonstrict parsing - pass", () => {
@@ -94,32 +94,18 @@ test("nonstrict parsing - fail", () => {
   expect(bad).toThrow();
 });
 
-test("pick a nonexistent key", () => {
+test("pick/omit/required/partial - do not allow unknown keys", () => {
   const schema = z.object({
-    a: z.string(),
-    b: z.number(),
+    name: z.string(),
+    age: z.number(),
   });
 
-  const pickedSchema = schema.pick({
-    a: true,
-    // @ts-expect-error should not accept unexpected keys.
-    doesntExist: true,
-  });
-
-  pickedSchema.parse({
-    a: "value",
-  });
-});
-
-test("omit a nonexistent key", () => {
-  const schema = z.object({
-    a: z.string(),
-    b: z.number(),
-  });
-
-  schema.omit({
-    a: true,
-    // @ts-expect-error should not accept unexpected keys.
-    doesntExist: true,
-  });
+  // @ts-expect-error
+  schema.pick({ $unknown: true });
+  // @ts-expect-error
+  schema.omit({ $unknown: true });
+  // @ts-expect-error
+  schema.required({ $unknown: true });
+  // @ts-expect-error
+  schema.partial({ $unknown: true });
 });
